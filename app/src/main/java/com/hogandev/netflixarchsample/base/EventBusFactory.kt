@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -67,7 +68,10 @@ class EventBusFactory private constructor(val owner: LifecycleOwner) {
 
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         fun onDestroy() {
-            map.forEach { entry -> entry.value.cancel() }
+            map.forEach { entry ->
+                Timber.d("canceling job: %s for %s", entry.value, entry.key.simpleName)
+                entry.value.cancel()
+            }
             buses.remove(owner)
         }
     }
@@ -87,6 +91,7 @@ class EventBusFactory private constructor(val owner: LifecycleOwner) {
     fun <T : ComponentEvent> emit(clazz: Class<T>, event: T, context: CoroutineContext = Dispatchers.Default) {
         val channel = if (map[clazz] != null) map[clazz] else create(clazz)
         CoroutineScope(context).launch {
+            Timber.d("sending event: %s", event)
             (channel as BroadcastChannel<T>).send(event)
         }
     }
@@ -103,14 +108,5 @@ class EventBusFactory private constructor(val owner: LifecycleOwner) {
         return (channel as BroadcastChannel<T>).openSubscription()
     }
 }
-
-/**
- * Extension on [LifecycleOwner] used to emit an event.
- */
-inline fun <reified T : ComponentEvent> LifecycleOwner.emit(event: T) =
-    with(EventBusFactory.get(this)) {
-        getSafeManagedChannel(T::class.java)
-        emit(T::class.java, event)
-    }
 
 

@@ -2,6 +2,7 @@ package com.hogandev.netflixarchsample.basic.components
 
 import android.arch.lifecycle.LifecycleOwner
 import android.view.ViewGroup
+import com.hogandev.netflixarchsample.TestContextProvider
 import com.hogandev.netflixarchsample.base.EventBusFactory
 import com.hogandev.netflixarchsample.basic.components.uiViews.LoadingView
 import com.hogandev.netflixarchsample.basic.events.ScreenStateEvent
@@ -9,6 +10,8 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import org.mockito.Mockito
 
 class LoadingComponentTest {
@@ -44,7 +47,8 @@ class LoadingComponentTest {
     }
 }
 
-class LoadingComponentMock(container: ViewGroup, bus: EventBusFactory) : LoadingComponent(container, bus) {
+class LoadingComponentMock(container: ViewGroup, bus: EventBusFactory)
+    : LoadingComponent(container, bus, TestContextProvider()) {
     override fun initView(container: ViewGroup): LoadingView {
         return mock()
     }

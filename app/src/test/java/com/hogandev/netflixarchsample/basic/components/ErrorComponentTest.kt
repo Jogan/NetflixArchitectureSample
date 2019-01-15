@@ -2,16 +2,24 @@ package com.hogandev.netflixarchsample.basic.components
 
 import android.arch.lifecycle.LifecycleOwner
 import android.view.ViewGroup
+import com.hogandev.netflixarchsample.TestContextProvider
 import com.hogandev.netflixarchsample.base.EventBusFactory
 import com.hogandev.netflixarchsample.basic.components.uiViews.ErrorView
 import com.hogandev.netflixarchsample.basic.events.ScreenStateEvent
 import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
+import net.lachlanmckee.timberjunit.TimberTestRule
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import org.mockito.Mockito
 
 class ErrorComponentTest {
+
+    @get:Rule
+    val timberRule: TestRule = TimberTestRule.logAllWhenTestFails()
+
     private lateinit var component : ErrorComponent
     private val owner = mock<LifecycleOwner> {
         on { lifecycle } doReturn mock()
@@ -44,7 +52,8 @@ class ErrorComponentTest {
     }
 }
 
-class ErrorComponentMock(container: ViewGroup, busFactory: EventBusFactory) : ErrorComponent(container, busFactory) {
+class ErrorComponentMock(container: ViewGroup, busFactory: EventBusFactory)
+    : ErrorComponent(container, busFactory, TestContextProvider()) {
     override fun initView(container: ViewGroup, bus: EventBusFactory): ErrorView {
         return mock()
     }

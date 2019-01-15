@@ -7,6 +7,7 @@ import com.hogandev.netflixarchsample.base.EventBusFactory
 import com.hogandev.netflixarchsample.base.UIComponent
 import com.hogandev.netflixarchsample.basic.components.uiViews.SuccessView
 import com.hogandev.netflixarchsample.basic.events.ScreenStateEvent
+import com.hogandev.netflixarchsample.util.CoroutineContextProvider
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,7 +17,10 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 
 @SuppressLint("CheckResult")
-open class SuccessComponent(container: ViewGroup, bus: EventBusFactory) : UIComponent<Unit> {
+open class SuccessComponent(container: ViewGroup,
+                            bus: EventBusFactory,
+                            contextPool: CoroutineContextProvider = CoroutineContextProvider())
+    : UIComponent<Unit> {
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     val uiView = initView(container, bus)
 
@@ -35,21 +39,21 @@ open class SuccessComponent(container: ViewGroup, bus: EventBusFactory) : UIComp
 
     init {
         val subscription = bus.getSafeManagedChannel(ScreenStateEvent::class.java)
-        CoroutineScope(Dispatchers.Main)
-            .launch {
-                subscription.consumeEach {
-                    when (it) {
-                        ScreenStateEvent.Loading -> {
-                            uiView.hide()
-                        }
-                        ScreenStateEvent.Loaded -> {
-                            uiView.show()
-                        }
-                        ScreenStateEvent.Error -> {
-                            uiView.hide()
+        CoroutineScope(contextPool.Main)
+                .launch {
+                    subscription.consumeEach {
+                        when (it) {
+                            ScreenStateEvent.Loading -> {
+                                uiView.hide()
+                            }
+                            ScreenStateEvent.Loaded -> {
+                                uiView.show()
+                            }
+                            ScreenStateEvent.Error -> {
+                                uiView.hide()
+                            }
                         }
                     }
                 }
-            }
     }
 }

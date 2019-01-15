@@ -2,6 +2,7 @@ package com.hogandev.netflixarchsample.basic.components
 
 import android.arch.lifecycle.LifecycleOwner
 import android.view.ViewGroup
+import com.hogandev.netflixarchsample.TestContextProvider
 import com.hogandev.netflixarchsample.base.EventBusFactory
 import com.hogandev.netflixarchsample.basic.components.uiViews.SuccessView
 import com.hogandev.netflixarchsample.basic.events.ScreenStateEvent
@@ -12,7 +13,7 @@ import org.junit.Test
 import org.mockito.Mockito
 
 class SuccessComponentTest {
-    private lateinit var component : SuccessComponent
+    private lateinit var component: SuccessComponent
     private val owner = mock<LifecycleOwner> {
         on { lifecycle } doReturn mock()
     }
@@ -44,7 +45,8 @@ class SuccessComponentTest {
     }
 }
 
-class SuccessComponentMock(container: ViewGroup, bus: EventBusFactory) : SuccessComponent(container, bus) {
+class SuccessComponentMock(container: ViewGroup, bus: EventBusFactory)
+    : SuccessComponent(container, bus, TestContextProvider()) {
     override fun initView(container: ViewGroup, bus: EventBusFactory): SuccessView {
         return mock()
     }

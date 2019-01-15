@@ -9,13 +9,14 @@ import com.hogandev.netflixarchsample.basic.components.LoadingComponent
 import com.hogandev.netflixarchsample.basic.components.SuccessComponent
 import com.hogandev.netflixarchsample.basic.events.ScreenStateEvent
 import com.hogandev.netflixarchsample.basic.events.UserInteractionEvent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+
+    private val uiScope = CoroutineScope(Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -25,25 +26,30 @@ class MainActivity : AppCompatActivity() {
         startSimulation()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        uiScope.cancel()
+    }
+
     private fun initComponents(rootViewContainer: ViewGroup) {
 
         LoadingComponent(rootViewContainer, EventBusFactory.get(this))
 
         // If the UI Component emits Interaction Events it can be observed like this
         val errorComponent = ErrorComponent(rootViewContainer, EventBusFactory.get(this))
-        val errorSubscription = errorComponent.getUserInteractionEvents()
-        CoroutineScope(Dispatchers.Main)
-            .launch {
-                errorSubscription.consumeEach {
-                    when (it) {
-                        UserInteractionEvent.IntentTapRetry -> {
-                            startSimulation()
-                        }
-                    }
-                }
-            }
+        observeEventsFromErrorComponent(errorComponent.getUserInteractionEvents())
 
         SuccessComponent(rootViewContainer, EventBusFactory.get(this))
+    }
+
+    private fun observeEventsFromErrorComponent(userInteractionEvents: ReceiveChannel<UserInteractionEvent>) = uiScope.launch {
+        userInteractionEvents.consumeEach {
+            when (it) {
+                UserInteractionEvent.IntentTapRetry -> {
+                    startSimulation()
+                }
+            }
+        }
     }
 
     /**
@@ -51,14 +57,12 @@ class MainActivity : AppCompatActivity() {
      */
     private fun startSimulation() {
         val lifecycleOwner = this
-        CoroutineScope(Dispatchers.IO)
-            .launch {
-                EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Loading)
-                delay(2000)
-                EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Loaded)
-                delay(2000)
-                EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Error)
-
-            }
+        uiScope.launch {
+            EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Loading)
+            delay(2000)
+            EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Loaded)
+            delay(2000)
+            EventBusFactory.get(lifecycleOwner).emit(ScreenStateEvent::class.java, ScreenStateEvent.Error)
+        }
     }
 }
